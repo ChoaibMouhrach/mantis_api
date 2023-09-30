@@ -5,23 +5,26 @@ namespace App\Http\Controllers;
 use App\Exceptions\BadRequestException;
 use App\Http\Requests\SignInUserRequest;
 use App\Http\Requests\SignUpUserRequest;
-use App\Models\User;
+use App\Repos\UserRepo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public UserRepo $repo;
+
+    public function __construct(UserRepo $repo)
+    {
+        $this->repo = $repo;
+    }
+
     public function signIn(SignInUserRequest $request)
     {
         $validated = $request->validated();
         $email = $validated["email"];
         $password = $validated["password"];
 
-        $user = User::where(["email" => $email])->first();
-
-        if (!$user) {
-            throw new BadRequestException("Email Address does not exists on our database");
-        }
+        $user = $this->repo->getByEmailOrThrow($email);
 
         if (!Hash::check($password, $user->password)) {
             throw new BadRequestException("Password is not valid");
@@ -43,17 +46,7 @@ class AuthController extends Controller
         $email = $validated["email"];
         $password = $validated["password"];
 
-        $user = User::where(["email" => $email])->first();
-
-        if ($user) {
-            throw new BadRequestException("Email address already taken");
-        }
-
-        $user = User::create([
-            "name" => $name,
-            "email" => $email,
-            "password" => bcrypt($password)
-        ]);
+        $user = $this->repo->create($name, $email, $password);
 
         $token = $user->createToken("auth")->plainTextToken;
 

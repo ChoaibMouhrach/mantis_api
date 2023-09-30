@@ -2,35 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\NotFoundException;
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\UpdateIssueRequest;
-use App\Models\App;
-use App\Models\Issue;
+
+// repos
+use App\Repos\AppRepo;
+use App\Repos\CategoryRepo;
+use App\Repos\IssueRepo;
 
 class IssueController extends Controller
 {
+
+    public IssueRepo $repo;
+    public AppRepo $appRepo;
+    public CategoryRepo $categoryRepo;
+
+    public function __construct(IssueRepo $repo, AppRepo $appRepo, CategoryRepo $categoryRepo)
+    {
+        $this->repo = $repo;
+        $this->appRepo = $appRepo;
+        $this->categoryRepo = $categoryRepo;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index($id)
     {
-        $user = auth()->user();
-
-        $app = App::where([
-            "user_id" => $user->id,
-            "id" => $id
-        ])->first();
-
-        if (!$app) {
-            throw new NotFoundException("App not found");
-        }
-
-        $issues = Issue::where([
-            "app_id" => $app->id
-        ])->paginate(8);
-
-        return response($issues);
+        $app = $this->appRepo->getApp($id);
+        $issues = $this->repo->getPaginatedIssues($app->id);
+        return response()->json($issues);
     }
 
     /**
@@ -43,34 +44,18 @@ class IssueController extends Controller
         $title = $validated["title"];
         $description = $validated["description"] ?? null;
 
-        $user = auth()->user();
+        $app = $this->appRepo->getApp($app_id);
 
-        $app = App::where([
-            "user_id" => $user->id,
-            "id" => $app_id
-        ])->first();
+        $category = $this->categoryRepo->getCategory($category_id);
 
-        if (!$app) {
-            throw new NotFoundException("App not found");
-        }
-
-        $category = App::where([
-            "user_id" => $user->id,
-            "id" => $app_id
-        ])->first();
-
-        if (!$category) {
-            throw new NotFoundException("Category not found");
-        }
-
-        $issue = Issue::create([
-            "app_id" => $app_id,
-            "category_id" => $category_id,
+        $issue = $this->repo->create([
+            "app_id" => $app->id,
+            "category_id" => $category->id,
             "title" => $title,
             "description" => $description
         ]);
 
-        return response($issue, 201);
+        return response()->json($issue, 201);
     }
 
     /**
@@ -78,27 +63,11 @@ class IssueController extends Controller
      */
     public function show($app_id, $issue_id)
     {
-        $user = auth()->user();
+        $app = $this->appRepo->getApp($app_id);
 
-        $app = App::where([
-            "user_id" => $user->id,
-            "id" => $app_id
-        ])->first();
+        $issue = $this->repo->getIssue($app->id, $issue_id);
 
-        if (!$app) {
-            throw new NotFoundException("App not found");
-        }
-
-        $issue = Issue::where([
-            "app_id" => $app->id,
-            "id" => $issue_id
-        ])->first();
-
-        if (!$issue) {
-            throw new NotFoundException("Issue not found");
-        }
-
-        return response($issue);
+        return response()->json($issue);
     }
 
     /**
@@ -112,42 +81,20 @@ class IssueController extends Controller
         $description = $validated["description"] ?? null;
         $category_id = $validated["category_id"];
 
-        $user = auth()->user();
+        $app = $this->appRepo->getApp($app_id);
 
-        $app = App::where([
-            "id" => $app_id,
-            "user_id" => $user->id
-        ])->first();
+        $category = $this->categoryRepo->getCategory($category_id);
 
-        if (!$app) {
-            throw new NotFoundException("App not found");
-        }
+        $issue = $this->repo->getIssue($app->id, $issue_id);
 
-        $category = App::where([
-            "id" => $category_id,
-            "user_id" => $user->id
-        ])->first();
-
-        if (!$category) {
-            throw new NotFoundException("Category not found");
-        }
-
-        $issue = Issue::where([
-            "id" => $issue_id,
-            "app_id" => $app_id
-        ])->first();
-
-        if (!$issue) {
-            throw new NotFoundException("Issue not found");
-        }
-
-        $issue->update([
+        $this->repo->update([
+            "id" => $issue->id,
             "title" => $title,
             "description" => $description,
-            "category_id" => $category_id
+            "category_id" => $category->id
         ]);
 
-        return response($issue);
+        return response()->json($issue);
     }
 
     /**
@@ -155,28 +102,10 @@ class IssueController extends Controller
      */
     public function destroy($app_id, $issue_id)
     {
-        $user = auth()->user();
+        $app = $this->appRepo->getApp($app_id);
 
-        $app = App::where([
-            "id" => $app_id,
-            "user_id" => $user->id
-        ])->first();
+        $this->repo->destroy($app->id, $issue_id);
 
-        if (!$app) {
-            throw new NotFoundException("App not found");
-        }
-
-        $issue = Issue::where([
-            "app_id" => $app->id,
-            "id" => $issue_id
-        ])->first();
-
-        if (!$issue) {
-            throw new NotFoundException("Issue not found");
-        }
-
-        $issue->delete();
-
-        return response(true);
+        return response()->json(true);
     }
 }
