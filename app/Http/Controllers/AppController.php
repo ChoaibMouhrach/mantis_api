@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BadRequestException;
+use App\Exceptions\NotFoundException;
 use App\Http\Requests\StoreAppRequest;
 use App\Http\Requests\UpdateAppRequest;
 use App\Models\App;
@@ -40,9 +42,7 @@ class AppController extends Controller
         ])->first();
 
         if ($app) {
-            return response([
-                "message" => "Name is already taken"
-            ], 400);
+            throw new BadRequestException("Name is already taken");
         }
 
         $app = App::create([
@@ -80,7 +80,13 @@ class AppController extends Controller
         $app = App::where([
             "user_id" => $user->id,
             "id" => $id
-        ])->update($validated);
+        ])->first();
+
+        if (!$app) {
+            throw new NotFoundException("App not found");
+        }
+
+        $app->update($validated);
 
         return response($app);
     }
@@ -98,9 +104,7 @@ class AppController extends Controller
         ])->first();
 
         if (!$app) {
-            return response([
-                "message" => "App not found"
-            ], 404);
+            throw new NotFoundException("App not found");
         }
 
         $app->delete();

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BadRequestException;
+use App\Exceptions\NotFoundException;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
@@ -37,9 +39,7 @@ class CategoryController extends Controller
         ])->first();
 
         if ($category) {
-            return response([
-                "message" => "Category already exists"
-            ], 400);
+            throw new BadRequestException("Category already exists");
         }
 
         $category = Category::create([
@@ -63,9 +63,7 @@ class CategoryController extends Controller
         ])->first();
 
         if (!$category) {
-            return response([
-                "message" => "Category not found"
-            ], 404);
+            throw new NotFoundException("Category not found");
         }
 
         return response($category, 200);
@@ -87,9 +85,7 @@ class CategoryController extends Controller
         ])->first();
 
         if (!$category) {
-            return response([
-                "message" => "Category not found"
-            ], 404);
+            throw new NotFoundException("Category not found");
         }
 
         $category = Category::where([
@@ -98,9 +94,7 @@ class CategoryController extends Controller
         ])->first();
 
         if ($category && $category->id !== $id) {
-            return response([
-                "message" => "Value is already taken"
-            ], 400);
+            throw new BadRequestException("Value is already taken");
         }
 
         $category = Category::where([
@@ -125,9 +119,7 @@ class CategoryController extends Controller
         ]);
 
         if (!$category) {
-            return response([
-                "message" => "Category not found"
-            ], 404);
+            throw new NotFoundException("Category not found");
         }
 
         $category->delete();

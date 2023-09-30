@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BadRequestException;
 use App\Http\Requests\SignInUserRequest;
 use App\Http\Requests\SignUpUserRequest;
 use App\Models\User;
@@ -19,13 +20,11 @@ class AuthController extends Controller
         $user = User::where(["email" => $email])->first();
 
         if (!$user) {
-            return response(["message" => "Email Address does not exists on our database"]);
+            throw new BadRequestException("Email Address does not exists on our database");
         }
 
         if (!Hash::check($password, $user->password)) {
-            return response([
-                "message" => "Password is not valid"
-            ], 400);
+            throw new BadRequestException("Password is not valid");
         }
 
         $token = $user->createToken("Auth")->plainTextToken;
@@ -47,9 +46,7 @@ class AuthController extends Controller
         $user = User::where(["email" => $email])->first();
 
         if ($user) {
-            return response([
-                "message" => "Email address already taken"
-            ]);
+            throw new BadRequestException("Email address already taken");
         }
 
         $user = User::create([
