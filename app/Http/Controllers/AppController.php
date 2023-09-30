@@ -2,24 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BadRequestException;
 use App\Http\Requests\StoreAppRequest;
 use App\Http\Requests\UpdateAppRequest;
-use App\Models\App;
+use App\Repos\AppRepo;
 
 class AppController extends Controller
 {
+
+    public AppRepo $repo;
+
+    public function __construct(AppRepo $repository)
+    {
+        $this->repo = $repository;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $user = auth()->user();
-
-        $apps = App::where([
-            "user_id" => $user->id
-        ])->paginate(8);
-
-        return response($apps);
+        $apps = $this->repo->getPaginatedApps();
+        return response()->json($apps);
     }
 
 
@@ -34,24 +38,19 @@ class AppController extends Controller
         $name = $validated["name"];
         $description = $validated["description"] ?? null;
 
-        $app = App::where([
-            "user_id" => $user->id,
-            "name" => $name
-        ])->first();
+        $app = $this->repo->getAppByName($name);
 
         if ($app) {
-            return response([
-                "message" => "Name is already taken"
-            ], 400);
+            throw new BadRequestException("App already exists");
         }
 
-        $app = App::create([
+        $app = $this->repo->create([
             "name" => $name,
             "description" => $description,
             "user_id" => $user->id
         ]);
 
-        return response($app);
+        return response()->json($app, 201);
     }
 
     /**
@@ -59,14 +58,8 @@ class AppController extends Controller
      */
     public function show($id)
     {
-        $user = auth()->user();
-
-        $app = App::where([
-            "user_id" => $user->id,
-            "id" => $id
-        ])->first();
-
-        return response($app);
+        $app = $this->repo->getApp($id);
+        return response()->json($app);
     }
 
     /**
@@ -74,15 +67,16 @@ class AppController extends Controller
      */
     public function update(UpdateAppRequest $request, $id)
     {
-        $user = auth()->user();
         $validated = $request->validated();
+        $name = $validated["name"];
+        $description = $validated["description"] ?? null;
 
-        $app = App::where([
-            "user_id" => $user->id,
-            "id" => $id
-        ])->update($validated);
+        $app = $this->repo->update($id, [
+            "name" => $name,
+            "description" => $description
+        ]);
 
-        return response($app);
+        return response()->json($app);
     }
 
     /**
@@ -90,21 +84,7 @@ class AppController extends Controller
      */
     public function destroy($id)
     {
-        $user = auth()->user();
-
-        $app = App::where([
-            "id" => $id,
-            "user_id" => $user->id
-        ])->first();
-
-        if (!$app) {
-            return response([
-                "message" => "App not found"
-            ], 404);
-        }
-
-        $app->delete();
-
-        return response(true);
+        $this->repo->destroy($id);
+        return response()->json(true);
     }
 }
