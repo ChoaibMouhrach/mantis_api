@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('issues', function (Blueprint $table) {
             $table->id();
             $table->string("title");
-            $table->text("description")->nullabel();
-            $table->foreignId("category_id")->onDelete("cascade")->constrained("categories");
-            $table->foreignId("app_id")->onDelete("cascade")->constrained("apps");
+            $table->text("description")->nullable();
+            $table->foreignId("category_id")->constrained("categories")->onDelete("cascade");
+            $table->foreignId("app_id")->constrained("apps")->onDelete("cascade");
             $table->timestamps();
         });
     }

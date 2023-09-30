@@ -2,24 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BadRequestException;
+use App\Exceptions\NotFoundException;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
+use App\Repos\CategoryRepo;
 
 class CategoryController extends Controller
 {
+
+    public CategoryRepo $repo;
+
+    public function __construct(CategoryRepo $repo)
+    {
+        $this->repo = $repo;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $user = auth()->user();
-
-        $categories = Category::where([
-            "user_id" => $user->id
-        ])->paginate(8);
-
-        return response($categories);
+        $categories = $this->repo->getPaginatedCategories();
+        return response()->json($categories);
     }
 
     /**
@@ -31,23 +37,18 @@ class CategoryController extends Controller
         $validated = $request->validated();
         $value = $validated["value"];
 
-        $category = Category::where([
-            "user_id" => $user->id,
-            "value" => $value
-        ])->first();
+        $category = $this->repo->getCategoryByValue($value);
 
         if ($category) {
-            return response([
-                "message" => "Category already exists"
-            ], 400);
+            throw new BadRequestException("Category already exists");
         }
 
-        $category = Category::create([
+        $category = $this->repo->create([
             "value" => $validated["value"],
             "user_id" => $user->id
         ]);
 
-        return response($category);
+        return response()->json($category, 201);
     }
 
     /**
@@ -55,20 +56,8 @@ class CategoryController extends Controller
      */
     public function show($id)
     {
-        $user = auth()->user();
-
-        $category = Category::where([
-            "id" => $id,
-            "user_id" => $user->id
-        ])->first();
-
-        if (!$category) {
-            return response([
-                "message" => "Category not found"
-            ], 404);
-        }
-
-        return response($category, 200);
+        $category = $this->repo->getCategory($id);
+        return response()->json($category);
     }
 
     /**
@@ -76,40 +65,20 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, $id)
     {
-        $user = auth()->user();
         $validated = $request->validated();
-
         $value = $validated["value"];
 
-        $category = Category::where([
-            "id" => $id,
-            "user_id" => $user->id
-        ])->first();
+        $category = $this->repo->getCategory($id);
 
-        if (!$category) {
-            return response([
-                "message" => "Category not found"
-            ], 404);
-        }
-
-        $category = Category::where([
-            "user_id" => $user->id,
-            "value" => $value
-        ])->first();
+        $category = $this->repo->getCategoryByValue($value);
 
         if ($category && $category->id !== $id) {
-            return response([
-                "message" => "Value is already taken"
-            ], 400);
+            throw new BadRequestException("Value is already taken");
         }
 
-        $category = Category::where([
-            "id" => $id,
-        ])->update([
-            "value" => $validated["value"]
-        ]);
+        $category = $this->repo->update($id, $validated["value"]);
 
-        return response($category);
+        return response()->json($category);
     }
 
     /**
@@ -117,21 +86,7 @@ class CategoryController extends Controller
      */
     public function destroy($id)
     {
-        $user = auth()->user();
-
-        $category = Category::where([
-            "id" => $id,
-            "user_id" => $user->id
-        ]);
-
-        if (!$category) {
-            return response([
-                "message" => "Category not found"
-            ], 404);
-        }
-
-        $category->delete();
-
-        return response(true);
+        $this->repo->destroy($id);
+        return response()->json($id);
     }
 }
