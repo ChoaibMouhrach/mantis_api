@@ -61,4 +61,9 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
         return response(["message" => "See you soon"]);
     }
+
+    public function getProfile()
+    {
+        return response()->json(auth()->user());
+    }
 }
