@@ -4,19 +4,28 @@ namespace App\Repos;
 
 use App\Exceptions\NotFoundException;
 use App\Models\Issue;
+use App\Models\Label;
 
 class IssueRepo
 {
-    public function getPaginatedIssues(int $app_id)
+    public function getPaginatedIssues(int $app_id, $search)
     {
-        return Issue::where([
+        $issues = Issue::with(["labels", "category"])->where([
             "app_id" => $app_id
-        ])->paginate(8);
+        ]);
+
+        if ($search) {
+            $issues = $issues
+                ->where("title", "like", "%$search%")
+                ->orWhere("description", "like", "%$search%");
+        }
+
+        return $issues->paginate(8);
     }
 
     public function getIssue(int $app_id, int $id)
     {
-        $issue = Issue::where([
+        $issue = Issue::with(["labels", "category"])->where([
             "app_id" => $app_id,
             "id" => $id
         ])->first();
@@ -30,12 +39,31 @@ class IssueRepo
 
     public function create($data)
     {
-        return Issue::create([
+        $issue = Issue::create([
             "app_id" => $data["app_id"],
             "category_id" => $data["category_id"],
             "title" => $data["title"],
             "description" => $data["description"]
         ]);
+
+        $user = auth()->user();
+
+        $ids = [];
+
+        foreach ($data["labels"] as $label) {
+            $label = Label::firstOrCreate([
+                "value" => $label,
+                "user_id" => $user->id
+            ]);
+
+            array_push($ids, $label->id);
+        }
+
+        $issue->labels()->attach($ids);
+
+        $issue->load("labels");
+
+        return $issue;
     }
 
     public function update($data)

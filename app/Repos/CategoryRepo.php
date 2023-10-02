@@ -2,22 +2,24 @@
 
 namespace App\Repos;
 
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
-use App\Models\App;
 use App\Models\Category;
 
 class CategoryRepo
 {
-    public function getPaginatedCategories()
+    public function getPaginatedCategories($search)
     {
         $user = auth()->user();
 
         $categories = Category::where([
             "user_id" => $user->id
-        ])->paginate(8);
+        ]);
 
-        return $categories;
+        if($search){
+            $categories = $categories->where("value", "like", "%$search%");
+        }
+
+        return $categories->paginate(8);
     }
 
     public function getCategory(int $id)

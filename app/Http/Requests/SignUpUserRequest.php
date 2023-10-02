@@ -24,7 +24,7 @@ class SignUpUserRequest extends FormRequest
         return [
             "name" => ["required", "min:3", "max:60"],
             "email" => ["required", "email", "max:255"],
-            "password" => ["required", "min:8", "max:255"]
+            "password" => ["required", "min:8", "max:255", "confirmed"]
         ];
     }
 }

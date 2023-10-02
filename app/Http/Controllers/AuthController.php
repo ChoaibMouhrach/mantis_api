@@ -7,6 +7,7 @@ use App\Http\Requests\SignInUserRequest;
 use App\Http\Requests\SignUpUserRequest;
 use App\Repos\UserRepo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -32,10 +33,15 @@ class AuthController extends Controller
 
         $token = $user->createToken("Auth")->plainTextToken;
 
+        $cookie = Cookie::make(
+            "auth",
+            $token
+        );
+
         return response([
             "user" => $user,
             "token" => $token
-        ]);
+        ])->withCookie($cookie);
     }
 
     public function signUp(SignUpUserRequest $request)
@@ -50,16 +56,22 @@ class AuthController extends Controller
 
         $token = $user->createToken("auth")->plainTextToken;
 
+        $cookie = Cookie::make(
+            "auth",
+            $token
+        );
+
         return response([
             "user" => $user,
             "token" => $token
-        ]);
+        ])->withCookie($cookie);
     }
 
     public function signOut(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response(["message" => "See you soon"]);
+        $cookie = Cookie::forget("auth");
+        return response(["message" => "See you soon"])->withCookie($cookie);
     }
 
     public function getProfile()

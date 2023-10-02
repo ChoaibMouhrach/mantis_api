@@ -8,13 +8,19 @@ use App\Models\App;
 class AppRepo
 {
 
-    public function getPaginatedApps()
+    public function getPaginatedApps($search)
     {
         $user = auth()->user();
 
-        return App::where([
+        $apps = App::where([
             "user_id" => $user->id
-        ])->paginate(8);
+        ]);
+
+        if ($search) {
+            $apps = $apps->where("name", "like", "%$search%");
+        }
+
+        return $apps->paginate(8);
     }
 
     protected function getAppBase($where)
@@ -66,10 +72,10 @@ class AppRepo
     {
         $app = $this->getApp($id);
 
-        $app->update([
-            "title" => $data["name"],
-            "description" => $data["description"]
-        ]);
+        $app->name = $data["name"];
+        $app->description = $data["description"];
+
+        $app->save();
 
         return $app;
     }

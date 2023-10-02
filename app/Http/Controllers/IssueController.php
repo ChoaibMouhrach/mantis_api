@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\UpdateIssueRequest;
-
+use App\Models\Label;
 // repos
 use App\Repos\AppRepo;
 use App\Repos\CategoryRepo;
 use App\Repos\IssueRepo;
+use Illuminate\Http\Request;
 
 class IssueController extends Controller
 {
@@ -27,10 +28,13 @@ class IssueController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index($id)
+    public function index(Request $request,  $id)
     {
+        $search = $request->input("search");
         $app = $this->appRepo->getApp($id);
-        $issues = $this->repo->getPaginatedIssues($app->id);
+
+        $issues = $this->repo->getPaginatedIssues($app->id, $search);
+
         return response()->json($issues);
     }
 
@@ -40,9 +44,11 @@ class IssueController extends Controller
     public function store(StoreIssueRequest $request, $app_id)
     {
         $validated = $request->validated();
+
         $category_id = $validated["category_id"];
         $title = $validated["title"];
         $description = $validated["description"] ?? null;
+        $labels = $validated["labels"];
 
         $app = $this->appRepo->getApp($app_id);
 
@@ -52,7 +58,8 @@ class IssueController extends Controller
             "app_id" => $app->id,
             "category_id" => $category->id,
             "title" => $title,
-            "description" => $description
+            "description" => $description,
+            "labels" => $labels
         ]);
 
         return response()->json($issue, 201);

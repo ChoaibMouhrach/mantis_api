@@ -24,7 +24,9 @@ class StoreIssueRequest extends FormRequest
         return [
             "category_id" => ["required", "exists:categories,id"],
             "title" => ["required", "min:3", "max:255"],
-            "description" => ["nullable", "min:3"]
+            "description" => ["nullable", "min:3"],
+            "labels" => ["required", "array", "min:1"],
+            "labels.*" =>  ["string", "min:1", "max:255"]
         ];
     }
 }

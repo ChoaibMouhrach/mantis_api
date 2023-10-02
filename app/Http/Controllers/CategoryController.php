@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
-use App\Models\Category;
 use App\Repos\CategoryRepo;
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
@@ -22,9 +21,12 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = $this->repo->getPaginatedCategories();
+        $search = $request->input("search");
+
+        $categories = $this->repo->getPaginatedCategories($search);
+
         return response()->json($categories);
     }
 

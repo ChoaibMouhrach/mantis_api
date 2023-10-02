@@ -6,6 +6,7 @@ use App\Exceptions\BadRequestException;
 use App\Http\Requests\StoreAppRequest;
 use App\Http\Requests\UpdateAppRequest;
 use App\Repos\AppRepo;
+use Illuminate\Http\Request;
 
 class AppController extends Controller
 {
@@ -20,9 +21,14 @@ class AppController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $apps = $this->repo->getPaginatedApps();
+        $search = $request->input("search");
+
+        $apps = $this->repo->getPaginatedApps(
+            $search
+        );
+
         return response()->json($apps);
     }
 
