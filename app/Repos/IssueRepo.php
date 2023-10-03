@@ -72,11 +72,13 @@ class IssueRepo
         $title = $data["title"];
         $description = $data["description"];
         $category_id = $data["category_id"];
+        $solved = $data["solved"];
 
         Issue::find($id)->update([
             "title" => $title,
             "description" => $description,
-            "category_id" => $category_id
+            "category_id" => $category_id,
+            "solved" => $solved
         ]);
     }
 
@@ -84,5 +86,28 @@ class IssueRepo
     {
         $issue = $this->getIssue($app_id, $issue_id);
         $issue->delete();
+    }
+
+    public function getStatistics($app_id)
+    {
+        $total = Issue::where([
+            "app_id" => $app_id
+        ])->count();
+
+        $totalSolved = Issue::where([
+            "app_id" => $app_id,
+            "solved" => true
+        ])->count();
+
+        $totalUnsolved = Issue::where([
+            "app_id" => $app_id,
+            "solved" => false
+        ])->count();
+
+        return [
+            "total" => $total,
+            "totalSolved" => $totalSolved,
+            "totalUnsolved" => $totalUnsolved
+        ];
     }
 }

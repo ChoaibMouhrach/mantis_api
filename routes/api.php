@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get("/apps/{id}/issues/statistics", [IssueController::class, "statistics"]);
     Route::apiResource("categories", CategoryController::class);
     Route::apiResource("apps", AppController::class);
     Route::apiResource("labels", LabelController::class);

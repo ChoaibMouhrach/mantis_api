@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text("description")->nullable();
             $table->foreignId("category_id")->constrained("categories")->onDelete("cascade");
             $table->foreignId("app_id")->constrained("apps")->onDelete("cascade");
+            $table->boolean("solved")->default(false);
             $table->timestamps();
         });
     }

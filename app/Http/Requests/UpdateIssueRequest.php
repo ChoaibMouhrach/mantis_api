@@ -24,7 +24,8 @@ class UpdateIssueRequest extends FormRequest
         return [
             "category_id" => ["required", "exists:categories,id"],
             "title" => ["required", "min:3", "max:255"],
-            "description" => ["nullable", "min:3"]
+            "description" => ["nullable", "min:3"],
+            "solved" => ["required", "boolean"]
         ];
     }
 }

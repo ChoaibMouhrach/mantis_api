@@ -11,6 +11,7 @@ class Issue extends Model
     use HasFactory;
 
     protected $fillable = [
+        "solved",
         "app_id",
         "category_id",
         "title",

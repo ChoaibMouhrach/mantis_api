@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreIssueRequest;
 use App\Http\Requests\UpdateIssueRequest;
-use App\Models\Label;
-// repos
 use App\Repos\AppRepo;
 use App\Repos\CategoryRepo;
 use App\Repos\IssueRepo;
@@ -87,6 +85,7 @@ class IssueController extends Controller
         $title = $validated["title"];
         $description = $validated["description"] ?? null;
         $category_id = $validated["category_id"];
+        $solved = $validated["solved"];
 
         $app = $this->appRepo->getApp($app_id);
 
@@ -98,7 +97,8 @@ class IssueController extends Controller
             "id" => $issue->id,
             "title" => $title,
             "description" => $description,
-            "category_id" => $category->id
+            "category_id" => $category->id,
+            "solved" => $solved
         ]);
 
         return response()->json($issue);
@@ -115,4 +115,13 @@ class IssueController extends Controller
 
         return response()->json(true);
     }
+
+    public function statistics($id){
+        $app = $this->appRepo->getApp($id);
+
+        $statistics = $this->repo->getStatistics($app->id);
+
+        return response()->json($statistics);
+    }
+
 }
